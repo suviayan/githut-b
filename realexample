@@ -78,12 +78,12 @@ set_exception_handler(function($exception){
     {/*{{{*/                                                                                                                              
         register_shutdown_function(function(){                                                                                            
             $error = error_get_last();                                                                                                    
-            $env = BeanFinder::get('configs')->env;                                                                                       
+            $env = BeanFinder::get('configs')->env;  //获取线上线下标记                                                                                     
             if($env == 'prod' && isset($error["type"]) && in_array($error["type"], array(E_ERROR,E_PARSE,E_CORE_ERROR,E_COMPILE_ERROR,E_US
 ER_ERROR,E_RECOVERABLE_ERROR)))                                                                                                           
             {                                                                                                                             
-                error_log(date('Y-m-d H:i:s')." ".print_r($error, true), 3, '/tmp/exception_web.log');                                    
-                header('location:http://www.haodf.com/error500.php');                                                                     
+                error_log(date('Y-m-d H:i:s')." ".print_r($error, true), 3, '/tmp/exception_web.log');  //把错误写入异常文件                                  
+                header('location:http://www.haodf.com/error500.php'); //跳转到500页面上                                                                  
             }                                                                                                                             
         });                                                                                                                               
     }/*}}}*/ 
