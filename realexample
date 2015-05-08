@@ -83,7 +83,7 @@ set_exception_handler(function($exception){
 ER_ERROR,E_RECOVERABLE_ERROR)))                                                                                                           
             {                                                                                                                             
                 error_log(date('Y-m-d H:i:s')." ".print_r($error, true), 3, '/tmp/exception_web.log');  //把错误写入异常文件                                  
-                header('location:http://www.haodf.com/error500.php'); //跳转到500页面上                                                                  
+                header('location:http://www.hxxxx.com/error500.php'); //跳转到500页面上                                                                  
             }                                                                                                                             
         });                                                                                                                               
     }/*}}}*/ 
