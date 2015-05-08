@@ -1,0 +1,89 @@
+ 
+错误类型
+
+PHP 主要有两种错误：触发错误和异常。
+其中触发错误大概可以分为：编译错误、引擎错误和运行时错误，其中前两个是无法捕获的；异常都是可以捕获的，当没有尝试捕获时则会中断代码。
+触发错误可以通过 error_get_last() 来进行获得，异常可以使用标准的 try...catch 语句来捕获。
+处理方式
+错误报告
+error_reporting() 函数是 PHP 提供的一个控制错误等级的函数，如果设置了对应的错误等级，则只会在对应错误等级触发时才会在页面（或输出，对于命令行来说）输出响应的错误信息。
+error_reporting(int level) 支持等级 level 参数使用二进制的数字来配置错误等级，错误等级一般用常量来代替对应的二进制标识。
+例如：E_ALL、E_NOTICE、 E_USER_NOTICE 等等；如果不传递参数，则会返回当前的错误等级（一般用来保存当前的错误等级以供后续恢复）。
+其中 E_PARSE、E_COMPILE_* 和 E_CORE_* 是非运行时错误，无法被捕获的
+php.ini
+配置文件是 PHP 初始化的默认配置，通过修改某些参数可以控制对应的初始化参数。如果要控制错误，可以通过以下几个方式来配置：
+display_errors - 是否显示错误，一般在生产环境建议关闭该参数并和下列的参数一起试用 log_errors - 记录错误开关，如果打开会记录到对应位置 error_log - 记录错误日志的位置，不指定为系统默认 error_reporting - 同上面的函数
+错误抑制
+
+php.ini文件
+
+; Common Values:
+  ;   E_ALL & ~E_NOTICE  (Show all errors, except for notices and coding standards warnings.)
+  ;   E_ALL & ~E_NOTICE | E_STRICT  (Show all errors, except for notices)
+  ;   E_COMPILE_ERROR|E_RECOVERABLE_ERROR|E_ERROR|E_CORE_ERROR  (Show only errors)
+  ;   E_ALL | E_STRICT  (Show all errors, warnings and notices including coding standards.)
+  ; Default Value: E_ALL & ~E_NOTICE
+  ; Development Value: E_ALL | E_STRICT
+  ; Production Value: E_ALL & ~E_DEPRECATED
+  ; http://php.net/error-reporting
+  
+  error_reporting = E_ALL | E_STRICT
+  
+  ; This directive controls whether or not and where PHP will output errors,
+  ; notices and warnings too. Error output is very useful during development, but
+  ; it could be very dangerous in production environments. Depending on the code
+  ; which is triggering the error, sensitive information could potentially leak
+  ; out of your application such as database usernames and passwords or worse.
+  ; It's recommended that errors be logged on production servers rather than
+  ; having the errors sent to STDOUT.
+  ; Possible Values:
+  ;   Off = Do not display any errors
+  ;   stderr = Display errors to STDERR (affects only CGI/CLI binaries!)
+  ;   On or stdout = Display errors to STDOUT
+  ; Default Value: On
+  ; Development Value: On
+  ; Production Value: Off
+  ; http://php.net/display-errors
+  
+  display_errors = On
+
+
+PHP 提供了一种特殊的操作，通过在语句前面加上抑制错误操作符@来抑制该语句出现错误。这种情况通常用于你不知道会发生什么情况下使用，比如打开了不确定的文件或者网络 URL，但一般不推荐使用
+抑制错误本身内部做了一系列的处理才达到该效果，并且对于错误本身完全是未知的，一般情况下，不建议这么使用
+捕获异常
+几乎在所有语言中，都会有对于异常的处理。如果程序抛出一个异常，那么可以通过 try…catch 语句来捕获该异常，如果明确知道错误的类型，也可以只捕获该类型的错误。try…catch 是一种最标准的错误处理方式。
+
+try {
+  // 代码部分
+} catch (Exception $e) {
+  // 根据异常对象对 $e 进行处理
+}
+设置错误处理器
+PHP 提供了 set_error_handler() 函数来让开发者传入一个函数名（或匿名函数，对于 5.2 以上的 PHP）就可以让所有的错误进入该函数，然后开发者可以在函数内进行控制，举例说明
+
+set_error_handler(function($code, $msg){
+  log_error("$msg occur with code $code");
+});
+对应地，PHP 也提供了 restore_error_handler() 来恢复为标准的 PHP 错误控制。
+设置异常处理器
+如果每个异常都去捕获，显然是很复杂的事情，需要编写很多代码，而且维护起来会比较复杂，对于一个快速编程的语言来说，PHP 自然不会允许发生这种事情。使用 set_exception_handler() 就可以像上面错误处理控制器一样接收所有未捕获的异常，然后做一些该做的事情，甚至还可以再把错误抛出来。例如：
+
+set_exception_handler(function($exception){
+  log_error("Exception occur: $exception");
+});
+崩溃捕获
+该类处理并非 PHP 标准的处理方式，但对于某种使程序崩溃的无法捕获的错误确实很有用，它是指注册一个 shutdown 函数，在函数内通过调用 error_get_last() 来获取最后的错误，并且根据错误等级来做相应的处理。
+ 
+    private function registerShutDown()                                                                                                   
+    {/*{{{*/                                                                                                                              
+        register_shutdown_function(function(){                                                                                            
+            $error = error_get_last();                                                                                                    
+            $env = BeanFinder::get('configs')->env;                                                                                       
+            if($env == 'prod' && isset($error["type"]) && in_array($error["type"], array(E_ERROR,E_PARSE,E_CORE_ERROR,E_COMPILE_ERROR,E_US
+ER_ERROR,E_RECOVERABLE_ERROR)))                                                                                                           
+            {                                                                                                                             
+                error_log(date('Y-m-d H:i:s')." ".print_r($error, true), 3, '/tmp/exception_web.log');                                    
+                header('location:http://www.haodf.com/error500.php');                                                                     
+            }                                                                                                                             
+        });                                                                                                                               
+    }/*}}}*/ 
