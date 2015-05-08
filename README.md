@@ -17,4 +17,5 @@
     2048   E_STRICT              编码标准化警告。允许PHP建议如何修改代码以确保最佳的互操作性向前兼容性。
     4096   E_RECOVERABLE_ERROR   开捕致命错误。这就像一个E_ERROR，但可以通过用户定义的处理捕获（又见set_error_handler（））
     8191   E_ALL                 所有的错误和警告(不包括 E_STRICT) (E_STRICT will be part of E_ALL as of PHP 6.0)
-                                                                                                                             
+
+文章部分摘自：http://feiyang.me/2014/05/handle-php-error-better-introduce-errors/
